@@ -1,0 +1,64 @@
+---
+title: "HW6"
+author: "Yanzi Ji220009501"
+date: "2023-11-21"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+library(TTR)
+library(fpp)
+library(forecast)
+library(readxl)
+#Get seasonal data
+bike <- read_excel("/Users/wangd07/Desktop/data.xlsx")
+tsbike = ts(bike$duration, start= c(2018,01),frequency = 12)
+plot(tsbike)
+#Do seasonal differences. It takes might make Time series stationary
+ndiffs(tsbike)
+tsdisplay(diff(tsbike,4))
+## It did not make it stationary. So Take lag 1 diffence
+tsdisplay(diff(diff(tsbike,4)))
+##ACF and PACF showed that there is significant lag at 1 and 4 for PAC
+auto.arima(tsbike,trace = TRUE)
+##returns an ARIMA(1,1,1) model，There is one significant lag in the autoregressive part of the model.The data needed to be differenced once to achieve stationarity.There is one significant lags in the moving average part of the model.
+fit <- Arima(tsbike, order=c(1,1,1), seasonal=c(1,1,1))
+tsdisplay(residuals(fit))
+auto.arima(tsbike, stepwise=FALSE, approximation=FALSE,trace = TRUE)
+fit3 <- Arima(tsbike, order=c(1,1,1), seasonal=c(1,1,1))
+fit3
+res <- residuals(fit3)
+## Plot the residuals
+tsdisplay(res)
+plot(fit3)
+#Box test verification
+Box.test(res, lag=16, fitdf=4, type="Ljung")
+fcast <- forecast(fit3,h=5)
+plot(forecast(fit3, h=12))
+plot(tsbike,main="Motorbike Usage Forecast",xlab='Time', ylab='Duration')
+lines(fcast$fitted,col="purple")
+accuracy(fcast)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
